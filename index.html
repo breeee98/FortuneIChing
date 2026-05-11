@@ -4,320 +4,162 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
-    <title>易经金钱卦起卦器</title>
+    <title>易经起卦 · I Ching Divination</title>
     <style>
         body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 4px; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        .fade-in { animation: fadeIn 0.4s ease-out; }
-        .slide-down { animation: slideDown 0.35s ease-out; }
-        .tab-active { background: #991b1b; color: white; }
-        .tab-inactive { background: #f5f5f4; color: #57534e; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes slideDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+        .fade-in { animation: fadeIn .4s ease-out; }
+        .slide-down { animation: slideDown .35s ease-out; }
+        .tab-active { background:#991b1b; color:white; }
+        .tab-inactive { background:#f5f5f4; color:#57534e; }
     </style>
 </head>
 <body class="bg-stone-100 text-stone-800 min-h-screen p-4 md:p-8">
-
 <div class="max-w-2xl mx-auto flex flex-col gap-5">
 
-    <!-- 标题 -->
-    <div class="text-center">
-        <h1 class="text-2xl font-bold text-stone-900">易经金钱卦起卦器</h1>
-        <p class="text-sm text-stone-500 mt-1">支持电子起卦 · 也可手动输入硬币数字 · 自动生成 AI 解卦 Prompt</p>
+    <!-- Header -->
+    <div class="flex items-start justify-between gap-4">
+        <div>
+            <h1 id="ui-title" class="text-2xl font-bold text-stone-900"></h1>
+            <p id="ui-subtitle" class="text-sm text-stone-500 mt-1"></p>
+        </div>
+        <!-- Lang toggle -->
+        <div class="flex bg-stone-200 rounded-full p-1 gap-1 shrink-0 mt-1">
+            <button id="btn-zh" onclick="setLang('zh')" class="px-3 py-1 text-sm font-bold rounded-full transition">中文</button>
+            <button id="btn-en" onclick="setLang('en')" class="px-3 py-1 text-sm font-bold rounded-full transition">EN</button>
+        </div>
     </div>
 
-    <!-- 主卡片 -->
+    <!-- Card -->
     <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
 
-        <!-- Tab 切换 -->
+        <!-- Tabs -->
         <div class="flex border-b border-stone-200">
-            <button id="tab-digital" onclick="switchTab('digital')"
-                class="tab-active flex-1 py-3 text-sm font-bold transition-colors rounded-tl-2xl">
-                📱 电子起卦（无需硬币）
+            <button id="tab-digital" onclick="switchTab('digital')" class="tab-active flex-1 py-3 text-sm font-bold transition-colors rounded-tl-2xl">
+                <span id="ui-tab-d"></span>
             </button>
-            <button id="tab-manual" onclick="switchTab('manual')"
-                class="tab-inactive flex-1 py-3 text-sm font-bold transition-colors rounded-tr-2xl">
-                🪙 我有硬币，手动输入
+            <button id="tab-manual" onclick="switchTab('manual')" class="tab-inactive flex-1 py-3 text-sm font-bold transition-colors rounded-tr-2xl">
+                <span id="ui-tab-m"></span>
             </button>
         </div>
 
         <div class="p-5 md:p-7 flex flex-col gap-5">
 
-            <!-- 问题输入（共用） -->
+            <!-- Question -->
             <div>
-                <label class="block text-sm font-semibold text-stone-600 mb-1.5">📝 你想问什么？<span class="font-normal text-stone-400">（选填，将写入解卦 Prompt）</span></label>
-                <input id="question-input" type="text" placeholder="例：我近期的事业发展方向如何？"
-                    class="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700 focus:border-transparent placeholder-stone-400 transition">
+                <label class="block text-sm font-semibold text-stone-600 mb-1.5">
+                    <span id="ui-q-label"></span>
+                    <span id="ui-q-opt" class="font-normal text-stone-400"></span>
+                </label>
+                <input id="question-input" type="text" class="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700 placeholder-stone-400 transition">
             </div>
 
-            <!-- ===== 电子起卦面板 ===== -->
+            <!-- ── Digital panel ── -->
             <div id="panel-digital">
-                <!-- 抛掷区 -->
                 <div class="flex flex-col items-center bg-stone-50 py-6 rounded-xl border border-stone-200">
-                    <div id="coin-display" class="flex gap-4 h-14 items-center justify-center mb-5">
-                        <div class="w-12 h-12 rounded-full border-2 border-stone-300 bg-stone-200 flex items-center justify-center text-stone-400 font-bold text-lg">?</div>
-                        <div class="w-12 h-12 rounded-full border-2 border-stone-300 bg-stone-200 flex items-center justify-center text-stone-400 font-bold text-lg">?</div>
-                        <div class="w-12 h-12 rounded-full border-2 border-stone-300 bg-stone-200 flex items-center justify-center text-stone-400 font-bold text-lg">?</div>
-                    </div>
+                    <div id="coin-display" class="flex gap-4 h-14 items-center justify-center mb-5"></div>
                     <div class="flex gap-3">
-                        <button id="toss-btn" onclick="tossCoins()"
-                            class="bg-red-800 hover:bg-red-900 text-white font-bold py-3 px-7 rounded-full shadow-md transition active:scale-95">
-                            摇卦 (掷3枚硬币)
-                        </button>
-                        <button id="reset-btn" onclick="resetDigital()"
-                            class="hidden bg-stone-200 hover:bg-stone-300 text-stone-700 font-bold py-3 px-5 rounded-full transition active:scale-95">
-                            重新起卦
-                        </button>
+                        <button id="toss-btn" onclick="tossCoins()" class="bg-red-800 hover:bg-red-900 text-white font-bold py-3 px-7 rounded-full shadow-md transition active:scale-95"></button>
+                        <button id="reset-d-btn" onclick="resetDigital()" class="hidden bg-stone-200 hover:bg-stone-300 text-stone-700 font-bold py-3 px-5 rounded-full transition active:scale-95"></button>
                     </div>
-                    <p id="status-text" class="text-sm text-stone-500 mt-3 font-medium">集中精神，默念问题后点击摇卦</p>
+                    <p id="status-text" class="text-sm text-stone-500 mt-3 font-medium"></p>
                 </div>
-
-                <!-- 卦象 -->
                 <div class="mt-4 border-2 border-stone-200 rounded-xl p-4 min-h-[160px] flex flex-col justify-end">
-                    <div id="hex-empty" class="text-center text-stone-400 py-8 text-sm flex items-center justify-center h-full">卦象将自下而上在此生成...</div>
+                    <div id="hex-empty" class="text-center text-stone-400 py-8 text-sm flex items-center justify-center"></div>
                     <div id="hex-container" class="flex flex-col-reverse gap-3"></div>
                 </div>
             </div>
 
-            <!-- ===== 手动输入面板 ===== -->
+            <!-- ── Manual panel ── -->
             <div id="panel-manual" class="hidden">
-                <!-- 简要说明 -->
                 <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-900 mb-4">
-                    <p class="font-semibold mb-1">🪙 使用真实硬币起卦后，在此输入每次抛出的结果</p>
-                    <p>字面=3（阳），花面=2（阴）。3枚相加得到 6、7、8 或 9，<b>从第1次抛到第6次</b>依次填入（系统自动从下往上排卦）。</p>
-                    <!-- 折叠教程 -->
-                    <button onclick="toggleTutorial()" class="mt-2 text-amber-700 underline text-xs font-medium">查看完整起卦教程 ▾</button>
-                    <div id="tutorial" class="hidden mt-3 text-xs text-amber-800 space-y-2 border-t border-amber-200 pt-3">
-                        <p><b>分值规则：</b>字面（面值/文字）= 阳 = 3，花面（图案/国徽）= 阴 = 2</p>
-                        <p><b>1字2花</b>：3+2+2 = <b>7</b>（少阳，阳爻）</p>
-                        <p><b>2字1花</b>：3+3+2 = <b>8</b>（少阴，阴爻）</p>
-                        <p><b>3全字</b>：3+3+3 = <b>9</b>（老阳，动爻）</p>
-                        <p><b>3全花</b>：2+2+2 = <b>6</b>（老阴，动爻）</p>
-                        <p class="text-red-700 font-semibold">⚠️ 第1次抛是初爻（最下），第6次是上爻（最上）</p>
-                    </div>
+                    <p id="ui-m-title" class="font-semibold mb-1"></p>
+                    <p id="ui-m-desc" class="text-xs"></p>
+                    <button onclick="toggleTutorial()" id="ui-tut-btn" class="mt-2 text-amber-700 underline text-xs font-medium"></button>
+                    <div id="tutorial" class="hidden mt-3 text-xs text-amber-800 space-y-1 border-t border-amber-200 pt-3"></div>
                 </div>
-
-                <!-- 6个输入行 -->
-                <div class="flex flex-col gap-3" id="manual-inputs">
-                    <!-- 从初爻到上爻，JS生成 -->
-                </div>
-
+                <div id="manual-inputs" class="flex flex-col gap-3"></div>
                 <div class="flex gap-3 mt-5">
-                    <button onclick="submitManual()"
-                        class="flex-1 bg-red-800 hover:bg-red-900 text-white font-bold py-3 rounded-full shadow-md transition active:scale-95">
-                        生成卦象与 Prompt
-                    </button>
-                    <button onclick="resetManual()"
-                        class="bg-stone-200 hover:bg-stone-300 text-stone-700 font-bold py-3 px-5 rounded-full transition active:scale-95">
-                        重置
-                    </button>
+                    <button onclick="submitManual()" id="ui-submit-m" class="flex-1 bg-red-800 hover:bg-red-900 text-white font-bold py-3 rounded-full shadow-md transition active:scale-95"></button>
+                    <button onclick="resetManual()" id="ui-reset-m" class="bg-stone-200 hover:bg-stone-300 text-stone-700 font-bold py-3 px-5 rounded-full transition active:scale-95"></button>
                 </div>
-
-                <!-- 卦象（手动模式） -->
                 <div id="manual-hex-wrap" class="hidden mt-4 border-2 border-stone-200 rounded-xl p-4">
                     <div id="manual-hex-container" class="flex flex-col-reverse gap-3"></div>
                 </div>
             </div>
 
-            <!-- ===== Prompt 区（共用） ===== -->
+            <!-- ── Prompt section ── -->
             <div id="prompt-section" class="hidden slide-down">
                 <div class="flex items-center justify-between mb-2">
-                    <h3 class="text-sm font-bold text-stone-700">🤖 解卦 Prompt（可直接复制给任意 AI）</h3>
-                    <button onclick="copyPrompt()"
-                        class="flex items-center gap-1.5 bg-red-800 hover:bg-red-900 text-white text-xs font-bold px-3 py-1.5 rounded-full transition active:scale-95">
+                    <h3 id="ui-prompt-title" class="text-sm font-bold text-stone-700"></h3>
+                    <button onclick="copyPrompt()" class="flex items-center gap-1.5 bg-red-800 hover:bg-red-900 text-white text-xs font-bold px-3 py-1.5 rounded-full transition active:scale-95">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                         </svg>
-                        <span id="copy-label">一键复制</span>
+                        <span id="copy-label"></span>
                     </button>
                 </div>
-                <div id="prompt-box"
-                    class="bg-stone-50 border border-stone-200 rounded-xl p-4 text-xs text-stone-700 leading-relaxed whitespace-pre-wrap font-mono max-h-56 overflow-y-auto">
-                </div>
+                <div id="prompt-box" class="bg-stone-50 border border-stone-200 rounded-xl p-4 text-xs text-stone-700 leading-relaxed whitespace-pre-wrap font-mono max-h-56 overflow-y-auto"></div>
             </div>
 
         </div>
     </div>
-
-    <p class="text-center text-xs text-stone-400 pb-4">占卜仅供参考，请以自身判断为主</p>
+    <p id="ui-disclaimer" class="text-center text-xs text-stone-400 pb-4"></p>
 </div>
 
 <script>
-// ─── 状态 ───
-let digitalLines = [];
-let currentLines = []; // 用于生成 prompt
-
-// ─── Tab 切换 ───
-function switchTab(tab) {
-    const isDigital = tab === 'digital';
-    document.getElementById('panel-digital').classList.toggle('hidden', !isDigital);
-    document.getElementById('panel-manual').classList.toggle('hidden', isDigital);
-    document.getElementById('tab-digital').className = `${isDigital ? 'tab-active' : 'tab-inactive'} flex-1 py-3 text-sm font-bold transition-colors rounded-tl-2xl`;
-    document.getElementById('tab-manual').className = `${!isDigital ? 'tab-active' : 'tab-inactive'} flex-1 py-3 text-sm font-bold transition-colors rounded-tr-2xl`;
-    document.getElementById('prompt-section').classList.add('hidden');
-}
-
-// ─── 教程折叠 ───
-function toggleTutorial() {
-    const t = document.getElementById('tutorial');
-    t.classList.toggle('hidden');
-}
-
-// ─── 电子起卦 ───
-function tossCoins() {
-    if (digitalLines.length >= 6) return;
-    document.getElementById('hex-empty').classList.add('hidden');
-
-    let sum = 0, coinHtml = '';
-    for (let i = 0; i < 3; i++) {
-        const heads = Math.random() >= 0.5;
-        sum += heads ? 3 : 2;
-        const cls = heads ? 'bg-amber-100 border-amber-500 text-amber-700' : 'bg-stone-200 border-stone-400 text-stone-600';
-        coinHtml += `<div class="w-12 h-12 rounded-full border-4 ${cls} flex items-center justify-center font-bold text-lg shadow-sm">${heads ? '字' : '花'}</div>`;
-    }
-    document.getElementById('coin-display').innerHTML = coinHtml;
-
-    const line = makeLine(sum);
-    digitalLines.push(line);
-    renderHexagram('hex-container', digitalLines);
-
-    const remaining = 6 - digitalLines.length;
-    const st = document.getElementById('status-text');
-    if (remaining > 0) {
-        st.innerText = `还需摇卦 ${remaining} 次`;
-    } else {
-        st.innerText = '起卦完成！Prompt 已在下方生成 ✓';
-        const btn = document.getElementById('toss-btn');
-        btn.disabled = true; btn.classList.add('opacity-50','cursor-not-allowed'); btn.innerText = '已完成';
-        document.getElementById('reset-btn').classList.remove('hidden');
-        currentLines = digitalLines;
-        showPrompt();
-    }
-}
-
-function resetDigital() {
-    digitalLines = [];
-    document.getElementById('hex-container').innerHTML = '';
-    document.getElementById('hex-empty').classList.remove('hidden');
-    document.getElementById('coin-display').innerHTML = ['?','?','?'].map(() =>
-        `<div class="w-12 h-12 rounded-full border-2 border-stone-300 bg-stone-200 flex items-center justify-center text-stone-400 font-bold text-lg">?</div>`).join('');
-    const btn = document.getElementById('toss-btn');
-    btn.disabled = false; btn.classList.remove('opacity-50','cursor-not-allowed'); btn.innerText = '摇卦 (掷3枚硬币)';
-    document.getElementById('status-text').innerText = '集中精神，默念问题后点击摇卦';
-    document.getElementById('reset-btn').classList.add('hidden');
-    document.getElementById('prompt-section').classList.add('hidden');
-}
-
-// ─── 手动输入 ───
-const posNames = ['初爻（第1次）','二爻（第2次）','三爻（第3次）','四爻（第4次）','五爻（第5次）','上爻（第6次）'];
-const shortNames = ['初爻','二爻','三爻','四爻','五爻','上爻'];
-const sumLabels = { 6:'老阴（动爻）', 7:'少阳', 8:'少阴', 9:'老阳（动爻）' };
-
-function buildManualInputs() {
-    const container = document.getElementById('manual-inputs');
-    container.innerHTML = '';
-    for (let i = 0; i < 6; i++) {
-        const row = document.createElement('div');
-        row.className = 'flex items-center gap-3 bg-stone-50 rounded-lg px-4 py-2.5 border border-stone-200';
-        row.innerHTML = `
-            <span class="text-sm font-semibold text-stone-600 w-28 shrink-0">${posNames[i]}</span>
-            <select id="manual-line-${i}"
-                class="flex-1 border border-stone-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700 bg-white">
-                <option value="">— 请选择 —</option>
-                <option value="6">6（老阴，动爻）</option>
-                <option value="7">7（少阳，阳爻）</option>
-                <option value="8">8（少阴，阴爻）</option>
-                <option value="9">9（老阳，动爻）</option>
-            </select>`;
-        container.appendChild(row);
-    }
-}
-
-function submitManual() {
-    const lines = [];
-    for (let i = 0; i < 6; i++) {
-        const val = parseInt(document.getElementById(`manual-line-${i}`).value);
-        if (isNaN(val)) { alert(`请选择第 ${i+1} 次（${shortNames[i]}）的数字`); return; }
-        lines.push(makeLine(val));
-    }
-    currentLines = lines;
-    document.getElementById('manual-hex-wrap').classList.remove('hidden');
-    renderHexagram('manual-hex-container', lines);
-    showPrompt();
-}
-
-function resetManual() {
-    buildManualInputs();
-    document.getElementById('manual-hex-wrap').classList.add('hidden');
-    document.getElementById('manual-hex-container').innerHTML = '';
-    document.getElementById('prompt-section').classList.add('hidden');
-}
-
-// ─── 通用辅助 ───
-function makeLine(sum) {
-    const map = {
-        6: { lineType:'老阴', lineSymbol:'X', isYang:false, isMoving:true },
-        7: { lineType:'少阳', lineSymbol:'',  isYang:true,  isMoving:false },
-        8: { lineType:'少阴', lineSymbol:'',  isYang:false, isMoving:false },
-        9: { lineType:'老阳', lineSymbol:'O', isYang:true,  isMoving:true },
-    };
-    return { sum, ...map[sum] };
-}
-
-function renderHexagram(containerId, lines) {
-    const container = document.getElementById(containerId);
-    container.innerHTML = '';
-    lines.forEach((line, i) => {
-        const div = document.createElement('div');
-        div.className = 'flex items-center w-full bg-stone-50 p-2 rounded fade-in';
-
-        const label = document.createElement('span');
-        label.className = 'w-10 text-xs text-stone-500 text-right pr-3 shrink-0';
-        label.innerText = shortNames[i];
-
-        const shape = document.createElement('div');
-        shape.className = 'flex-1 flex justify-center gap-1 h-5 px-4';
-        shape.innerHTML = line.isYang
-            ? `<div class="w-full h-full bg-stone-800 rounded-sm"></div>`
-            : `<div class="w-[45%] h-full bg-stone-800 rounded-sm"></div><div class="w-[10%]"></div><div class="w-[45%] h-full bg-stone-800 rounded-sm"></div>`;
-
-        const info = document.createElement('span');
-        info.className = `w-24 text-xs font-bold flex items-center gap-1 shrink-0 ${line.isMoving ? 'text-red-600' : 'text-stone-600'}`;
-        info.innerText = `${line.sum} ${line.lineType}`;
-        if (line.isMoving) {
-            const m = document.createElement('span');
-            m.className = 'inline-block bg-red-100 text-red-800 w-4 h-4 text-xs rounded-full flex items-center justify-center';
-            m.innerText = line.lineSymbol;
-            info.appendChild(m);
-        }
-
-        div.appendChild(label); div.appendChild(shape); div.appendChild(info);
-        container.appendChild(div);
-    });
-}
-
-// ─── Prompt 生成 ───
-function showPrompt() {
-    const question = document.getElementById('question-input').value.trim() || '（未填写，请结合卦象综合解读）';
-    const movingLines = currentLines.map((l,i) => l.isMoving ? `${shortNames[i]}（${l.lineType}，数字 ${l.sum}）` : null).filter(Boolean);
-    const hasMoving = movingLines.length > 0;
-
-    const changeLine = l => {
-        if (!l.isMoving) return l.isYang ? '阳爻（—）' : '阴爻（– –）';
-        return l.isYang ? '阴爻（– –）[由老阳变]' : '阳爻（—）[由老阴变]';
-    };
-
-    const linesDetail = currentLines.map((l,i) =>
-        `  ${shortNames[i]}：数字 ${l.sum}（${l.lineType}）${l.isMoving ? ' ← 动爻' : ''}`).join('\n');
-    const changeDetail = currentLines.map((l,i) =>
-        `  ${shortNames[i]}：${changeLine(l)}`).join('\n');
-
-    const prompt =
+// ══════════════════════════════════════════
+//  STRINGS
+// ══════════════════════════════════════════
+const S = {
+  zh: {
+    title: '易经金钱卦起卦器',
+    subtitle: '支持电子起卦 · 可手动输入硬币数字 · 自动生成 AI 解卦 Prompt',
+    tabD: '📱 电子起卦（无需硬币）',
+    tabM: '🪙 我有硬币，手动输入',
+    qLabel: '📝 你想问什么？',
+    qOpt: '（选填，将写入解卦 Prompt）',
+    qPH: '例：我近期的事业发展方向如何？',
+    tossBtn: '摇卦 (掷3枚硬币)',
+    doneBtn: '已完成',
+    resetDBtn: '重新起卦',
+    statusInit: '集中精神，默念问题后点击摇卦',
+    statusRem: n => `还需摇卦 ${n} 次`,
+    statusDone: '起卦完成！Prompt 已在下方生成 ✓',
+    hexEmpty: '卦象将自下而上在此生成...',
+    mTitle: '🪙 使用真实硬币起卦后，在此输入每次抛出的结果',
+    mDesc: '字面=3（阳），花面=2（阴）。3枚相加得 6、7、8 或 9，从第1次抛到第6次依次填入。',
+    tutBtn: '查看完整起卦教程 ▾',
+    tutorial: [
+      '<b>分值规则：</b>字面（面值/文字）= 阳 = 3，花面（图案/国徽）= 阴 = 2',
+      '<b>1字 2花：</b>3+2+2 = 7（少阳，阳爻）',
+      '<b>2字 1花：</b>3+3+2 = 8（少阴，阴爻）',
+      '<b>3全字：</b>3+3+3 = 9（老阳，动爻）',
+      '<b>3全花：</b>2+2+2 = 6（老阴，动爻）',
+      '<b class="text-red-700">⚠️ 第1次抛是初爻（最下），第6次是上爻（最上）</b>',
+    ],
+    submitM: '生成卦象与 Prompt',
+    resetM: '重置',
+    promptTitle: '🤖 解卦 Prompt（可直接复制给任意 AI）',
+    copyBtn: '一键复制',
+    copiedBtn: '已复制 ✓',
+    disclaimer: '占卜仅供参考，请以自身判断为主',
+    lineNames: ['初爻','二爻','三爻','四爻','五爻','上爻'],
+    manualLabels: ['初爻（第1次）','二爻（第2次）','三爻（第3次）','四爻（第4次）','五爻（第5次）','上爻（第6次）'],
+    typeShort: { 6:'老阴', 7:'少阳', 8:'少阴', 9:'老阳' },
+    typeFull:  { 6:'老阴（动爻）', 7:'少阳', 8:'少阴', 9:'老阳（动爻）' },
+    selPH: '— 请选择 —',
+    coinH: '字', coinT: '花',
+    qFallback: '（未填写，请结合卦象综合解读）',
+    alertLine: i => `请选择第 ${i+1} 次的数字`,
+    prompt: (q, linesDetail, hasMoving, movingStr, changeDetail) =>
 `你是一位精通《周易》的易学老师，请根据以下金钱卦卦象为我进行解读。
 
 【所问之事】
-${question}
+${q}
 
 【起卦方式】
 三枚硬币金钱卦法（字面=3/阳，花面=2/阴）
@@ -326,7 +168,7 @@ ${question}
 ${linesDetail}
 
 【动爻】
-${hasMoving ? movingLines.join('、') : '无动爻（静卦，只看本卦）'}
+${hasMoving ? movingStr : '无动爻（静卦，只看本卦）'}
 
 【之卦六爻（动爻变化后）】
 ${hasMoving ? changeDetail : '无（本卦无动爻，不起之卦）'}
@@ -336,24 +178,319 @@ ${hasMoving ? changeDetail : '无（本卦无动爻，不起之卦）'}
 2. 动爻分析：${hasMoving ? '各动爻的爻辞含义与提示' : '（本卦无动爻，跳过）'}
 3. 之卦：${hasMoving ? '卦名与含义，代表事态走向' : '（本卦无动爻，跳过）'}
 4. 综合解读：结合所问之事，给出具体建议与提示
-5. 一句话总结`;
+5. 一句话总结`,
+  },
 
-    document.getElementById('prompt-box').innerText = prompt;
-    document.getElementById('prompt-section').classList.remove('hidden');
-    setTimeout(() => document.getElementById('prompt-section').scrollIntoView({ behavior:'smooth', block:'nearest' }), 100);
+  en: {
+    title: 'I Ching Coin Divination',
+    subtitle: 'Digital casting · Manual coin entry · Auto-generate AI interpretation prompt',
+    tabD: '📱 Digital Cast (no coins needed)',
+    tabM: '🪙 I have coins — enter manually',
+    qLabel: '📝 What is your question?',
+    qOpt: '(optional — included in the prompt)',
+    qPH: 'e.g. What is the outlook for my career this year?',
+    tossBtn: 'Cast (toss 3 coins)',
+    doneBtn: 'Done',
+    resetDBtn: 'Start Over',
+    statusInit: 'Focus your mind, hold your question, then cast',
+    statusRem: n => `${n} more toss${n===1?'':'es'} remaining`,
+    statusDone: 'Reading complete! Your prompt is ready below ✓',
+    hexEmpty: 'Your hexagram will build from the bottom up...',
+    mTitle: '🪙 After casting your coins, enter each result below',
+    mDesc: 'Heads = Yang = 3, Tails = Yin = 2. Add 3 coins per toss to get 6, 7, 8, or 9. Enter from toss 1 to toss 6.',
+    tutBtn: 'View full casting guide ▾',
+    tutorial: [
+      '<b>Scoring:</b> Heads (face-value side) = Yang = 3 · Tails (emblem/design side) = Yin = 2',
+      '<b>1 Heads + 2 Tails:</b> 3+2+2 = 7 (Young Yang — solid line)',
+      '<b>2 Heads + 1 Tail:</b> 3+3+2 = 8 (Young Yin — broken line)',
+      '<b>3 Heads:</b> 3+3+3 = 9 (Old Yang — moving line)',
+      '<b>3 Tails:</b> 2+2+2 = 6 (Old Yin — moving line)',
+      '<b class="text-red-700">⚠️ Toss 1 = Line 1 (bottom), Toss 6 = Line 6 (top)</b>',
+    ],
+    submitM: 'Generate Hexagram & Prompt',
+    resetM: 'Reset',
+    promptTitle: '🤖 Interpretation Prompt (copy & paste into any AI)',
+    copyBtn: 'Copy Prompt',
+    copiedBtn: 'Copied ✓',
+    disclaimer: 'For reflection purposes only — use your own judgment',
+    lineNames: ['Line 1','Line 2','Line 3','Line 4','Line 5','Line 6'],
+    manualLabels: ['Line 1 (1st toss)','Line 2 (2nd toss)','Line 3 (3rd toss)','Line 4 (4th toss)','Line 5 (5th toss)','Line 6 (6th toss)'],
+    typeShort: { 6:'Old Yin', 7:'Young Yang', 8:'Young Yin', 9:'Old Yang' },
+    typeFull:  { 6:'Old Yin (moving)', 7:'Young Yang', 8:'Young Yin', 9:'Old Yang (moving)' },
+    selPH: '— Select —',
+    coinH: 'Yang', coinT: 'Yin',
+    qFallback: '(Not specified — interpret based on the hexagram alone)',
+    alertLine: i => `Please select a value for toss ${i+1}`,
+    prompt: (q, linesDetail, hasMoving, movingStr, changeDetail) =>
+`You are an expert in the I Ching (Book of Changes). Please interpret the following hexagram reading.
+
+[Question]
+${q}
+
+[Method]
+Three-coin method (Heads = Yang = 3, Tails = Yin = 2)
+
+[Primary Hexagram Lines — bottom to top]
+${linesDetail}
+
+[Moving Lines]
+${hasMoving ? movingStr : 'None (static hexagram — read primary hexagram only)'}
+
+[Relating Hexagram — after moving line transformations]
+${hasMoving ? changeDetail : 'N/A (no moving lines)'}
+
+Please structure your interpretation as follows:
+1. Primary Hexagram: name, trigrams, and core theme
+2. Moving Lines: ${hasMoving ? 'meaning and guidance for each moving line' : '(skip — no moving lines)'}
+3. Relating Hexagram: ${hasMoving ? 'name and meaning — how the situation evolves' : '(skip — no moving lines)'}
+4. Overall Interpretation: specific advice and insights related to the question
+5. One-sentence summary`,
+  }
+};
+
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+let lang = 'zh';
+let digitalLines = [], digitalDone = false;
+let currentLines = [];
+
+const el = id => document.getElementById(id);
+const t  = k  => S[lang][k];
+
+// ══════════════════════════════════════════
+//  LANGUAGE
+// ══════════════════════════════════════════
+function setLang(l) {
+    lang = l;
+    el('btn-zh').className = `px-3 py-1 text-sm font-bold rounded-full transition ${l==='zh'?'bg-white shadow text-stone-800':'text-stone-500'}`;
+    el('btn-en').className = `px-3 py-1 text-sm font-bold rounded-full transition ${l==='en'?'bg-white shadow text-stone-800':'text-stone-500'}`;
+    updateUI();
+    buildManualInputs();
+    if (digitalLines.length) renderHexagram('hex-container', digitalLines);
+    if (currentLines.length===6 && !el('prompt-section').classList.contains('hidden')) showPrompt(false);
 }
 
-function copyPrompt() {
-    navigator.clipboard.writeText(document.getElementById('prompt-box').innerText).then(() => {
-        const label = document.getElementById('copy-label');
-        label.innerText = '已复制 ✓';
-        setTimeout(() => label.innerText = '一键复制', 2000);
+function updateUI() {
+    el('ui-title').innerText      = t('title');
+    el('ui-subtitle').innerText   = t('subtitle');
+    el('ui-tab-d').innerText      = t('tabD');
+    el('ui-tab-m').innerText      = t('tabM');
+    el('ui-q-label').innerText    = t('qLabel');
+    el('ui-q-opt').innerText      = t('qOpt');
+    el('question-input').placeholder = t('qPH');
+    el('toss-btn').innerText      = digitalDone ? t('doneBtn') : t('tossBtn');
+    el('reset-d-btn').innerText   = t('resetDBtn');
+    el('hex-empty').innerText     = t('hexEmpty');
+    el('ui-m-title').innerText    = t('mTitle');
+    el('ui-m-desc').innerText     = t('mDesc');
+    el('ui-tut-btn').innerText    = t('tutBtn');
+    el('tutorial').innerHTML      = t('tutorial').map(s=>`<p>${s}</p>`).join('');
+    el('ui-submit-m').innerText   = t('submitM');
+    el('ui-reset-m').innerText    = t('resetM');
+    el('ui-prompt-title').innerText = t('promptTitle');
+    el('copy-label').innerText    = t('copyBtn');
+    el('ui-disclaimer').innerText = t('disclaimer');
+    // status
+    if (!digitalDone) {
+        const rem = 6 - digitalLines.length;
+        el('status-text').innerText = rem===6 ? t('statusInit') : t('statusRem')(rem);
+    } else {
+        el('status-text').innerText = t('statusDone');
+    }
+    // coins placeholder
+    if (!digitalLines.length) renderCoinsPlaceholder();
+}
+
+function renderCoinsPlaceholder() {
+    el('coin-display').innerHTML = [0,1,2].map(()=>
+        `<div class="w-12 h-12 rounded-full border-2 border-stone-300 bg-stone-200 flex items-center justify-center text-stone-400 font-bold text-lg">?</div>`
+    ).join('');
+}
+
+// ══════════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════════
+function switchTab(tab) {
+    const isD = tab==='digital';
+    el('panel-digital').classList.toggle('hidden', !isD);
+    el('panel-manual').classList.toggle('hidden', isD);
+    el('tab-digital').className = `${isD?'tab-active':'tab-inactive'} flex-1 py-3 text-sm font-bold transition-colors rounded-tl-2xl`;
+    el('tab-manual').className  = `${!isD?'tab-active':'tab-inactive'} flex-1 py-3 text-sm font-bold transition-colors rounded-tr-2xl`;
+    el('prompt-section').classList.add('hidden');
+}
+
+function toggleTutorial() { el('tutorial').classList.toggle('hidden'); }
+
+// ══════════════════════════════════════════
+//  DIGITAL CASTING
+// ══════════════════════════════════════════
+function tossCoins() {
+    if (digitalLines.length>=6) return;
+    el('hex-empty').classList.add('hidden');
+    let sum=0, html='';
+    for (let i=0;i<3;i++) {
+        const h=Math.random()>=.5; sum+=h?3:2;
+        const cls=h?'bg-amber-100 border-amber-500 text-amber-700':'bg-stone-200 border-stone-400 text-stone-600';
+        html+=`<div class="w-12 h-12 rounded-full border-4 ${cls} flex items-center justify-center font-bold text-base shadow-sm">${h?t('coinH'):t('coinT')}</div>`;
+    }
+    el('coin-display').innerHTML=html;
+    digitalLines.push(makeLine(sum));
+    renderHexagram('hex-container', digitalLines);
+    const rem=6-digitalLines.length;
+    if (rem>0) { el('status-text').innerText=t('statusRem')(rem); }
+    else {
+        digitalDone=true;
+        el('status-text').innerText=t('statusDone');
+        el('toss-btn').disabled=true;
+        el('toss-btn').classList.add('opacity-50','cursor-not-allowed');
+        el('toss-btn').innerText=t('doneBtn');
+        el('reset-d-btn').classList.remove('hidden');
+        currentLines=digitalLines;
+        showPrompt();
+    }
+}
+
+function resetDigital() {
+    digitalLines=[]; digitalDone=false;
+    el('hex-container').innerHTML='';
+    el('hex-empty').classList.remove('hidden');
+    renderCoinsPlaceholder();
+    el('toss-btn').disabled=false;
+    el('toss-btn').classList.remove('opacity-50','cursor-not-allowed');
+    el('toss-btn').innerText=t('tossBtn');
+    el('status-text').innerText=t('statusInit');
+    el('reset-d-btn').classList.add('hidden');
+    el('prompt-section').classList.add('hidden');
+}
+
+// ══════════════════════════════════════════
+//  MANUAL INPUT
+// ══════════════════════════════════════════
+function buildManualInputs() {
+    const c=el('manual-inputs'); c.innerHTML='';
+    t('manualLabels').forEach((lbl,i)=>{
+        const row=document.createElement('div');
+        row.className='flex items-center gap-3 bg-stone-50 rounded-lg px-4 py-2.5 border border-stone-200';
+        const tf=t('typeFull');
+        row.innerHTML=`
+          <span class="text-sm font-semibold text-stone-600 w-36 shrink-0">${lbl}</span>
+          <select id="ml-${i}" class="flex-1 border border-stone-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-700 bg-white">
+            <option value="">${t('selPH')}</option>
+            <option value="6">6 — ${tf[6]}</option>
+            <option value="7">7 — ${tf[7]}</option>
+            <option value="8">8 — ${tf[8]}</option>
+            <option value="9">9 — ${tf[9]}</option>
+          </select>`;
+        c.appendChild(row);
     });
 }
 
-// ─── 初始化 ───
-buildManualInputs();
+function submitManual() {
+    const lines=[];
+    for (let i=0;i<6;i++) {
+        const v=parseInt(el(`ml-${i}`).value);
+        if (isNaN(v)) { alert(t('alertLine')(i)); return; }
+        lines.push(makeLine(v));
+    }
+    currentLines=lines;
+    el('manual-hex-wrap').classList.remove('hidden');
+    renderHexagram('manual-hex-container', lines);
+    showPrompt();
+}
+
+function resetManual() {
+    buildManualInputs();
+    el('manual-hex-wrap').classList.add('hidden');
+    el('manual-hex-container').innerHTML='';
+    el('prompt-section').classList.add('hidden');
+}
+
+// ══════════════════════════════════════════
+//  SHARED HELPERS
+// ══════════════════════════════════════════
+function makeLine(sum) {
+    return { sum,
+        isYang:   sum===7||sum===9,
+        isMoving: sum===6||sum===9,
+        sym:      sum===9?'O':sum===6?'X':''
+    };
+}
+
+function renderHexagram(cid, lines) {
+    const c=el(cid); c.innerHTML='';
+    const names=t('lineNames'), ts=t('typeShort');
+    lines.forEach((line,i)=>{
+        const div=document.createElement('div');
+        div.className='flex items-center w-full bg-stone-50 p-2 rounded fade-in';
+        const lbl=document.createElement('span');
+        lbl.className='w-12 text-xs text-stone-500 text-right pr-3 shrink-0';
+        lbl.innerText=names[i];
+        const shape=document.createElement('div');
+        shape.className='flex-1 flex justify-center gap-1 h-5 px-4';
+        shape.innerHTML=line.isYang
+            ?`<div class="w-full h-full bg-stone-800 rounded-sm"></div>`
+            :`<div class="w-[45%] h-full bg-stone-800 rounded-sm"></div><div class="w-[10%]"></div><div class="w-[45%] h-full bg-stone-800 rounded-sm"></div>`;
+        const info=document.createElement('span');
+        info.className=`w-24 text-xs font-bold flex items-center gap-1 shrink-0 ${line.isMoving?'text-red-600':'text-stone-600'}`;
+        info.innerText=`${line.sum} ${ts[line.sum]}`;
+        if (line.isMoving) {
+            const m=document.createElement('span');
+            m.className='inline-block bg-red-100 text-red-800 w-4 h-4 text-xs rounded-full flex items-center justify-center';
+            m.innerText=line.sym; info.appendChild(m);
+        }
+        div.appendChild(lbl); div.appendChild(shape); div.appendChild(info);
+        c.appendChild(div);
+    });
+}
+
+function showPrompt(scroll=true) {
+    const q=el('question-input').value.trim()||t('qFallback');
+    const names=t('lineNames'), ts=t('typeShort');
+    const isZh=lang==='zh';
+    const hasMoving=currentLines.some(l=>l.isMoving);
+
+    const linesDetail=currentLines.map((l,i)=>{
+        const mv=l.isMoving?(isZh?' ← 动爻':' ← moving line'):'';
+        return isZh
+            ?`  ${names[i]}：数字 ${l.sum}（${ts[l.sum]}）${mv}`
+            :`  ${names[i]}: value ${l.sum} (${ts[l.sum]})${mv}`;
+    }).join('\n');
+
+    const changeStr=l=>{
+        if (!l.isMoving) return l.isYang
+            ?(isZh?'阳爻（—）':'Yang — solid line (—)')
+            :(isZh?'阴爻（– –）':'Yin — broken line (– –)');
+        return l.isYang
+            ?(isZh?'阴爻（– –）[由老阳变]':'Yin — broken line [changed from Old Yang]')
+            :(isZh?'阳爻（—）[由老阴变]':'Yang — solid line [changed from Old Yin]');
+    };
+
+    const changeDetail=currentLines.map((l,i)=>
+        isZh?`  ${names[i]}：${changeStr(l)}`:`  ${names[i]}: ${changeStr(l)}`
+    ).join('\n');
+
+    const movingStr=currentLines
+        .map((l,i)=>l.isMoving?(isZh?`${names[i]}（${ts[l.sum]}，数字 ${l.sum}）`:`${names[i]} (${ts[l.sum]}, value ${l.sum})`):null)
+        .filter(Boolean).join(isZh?'、':', ');
+
+    el('prompt-box').innerText=t('prompt')(q,linesDetail,hasMoving,movingStr,changeDetail);
+    el('prompt-section').classList.remove('hidden');
+    el('copy-label').innerText=t('copyBtn');
+    if (scroll) setTimeout(()=>el('prompt-section').scrollIntoView({behavior:'smooth',block:'nearest'}),100);
+}
+
+function copyPrompt() {
+    navigator.clipboard.writeText(el('prompt-box').innerText).then(()=>{
+        el('copy-label').innerText=t('copiedBtn');
+        setTimeout(()=>el('copy-label').innerText=t('copyBtn'),2000);
+    });
+}
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+setLang('zh');
 </script>
 </body>
 </html>
-
